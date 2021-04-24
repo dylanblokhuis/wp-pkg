@@ -30,7 +30,7 @@ pub fn dump(dump_destination: &str) -> Result<(), mysql::Error> {
         });
     }
 
-    fs::write(dump_destination, create_dump_script(&tables)).expect("Unable to write file");
+    fs::write(dump_destination, create_dump_script(&tables))?;
 
     Ok(())
 }
