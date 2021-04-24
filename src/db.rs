@@ -32,11 +32,11 @@ pub fn dump(dump_destination: &str, db_url: &str) -> Result<(), mysql::Error> {
     Ok(())
 }
 
-fn get_insert_sql(conn: &mut PooledConn, table_name: &String) -> Result<String, mysql::Error> {
+fn get_insert_sql(conn: &mut PooledConn, table_name: &str) -> Result<String, mysql::Error> {
     let mut sql = String::new();
     let query_rows: Vec<Row> = conn.query(format!("SELECT * FROM {}", table_name))?;
 
-    if query_rows.len() == 0 {
+    if query_rows.is_empty() {
         return Ok(String::new());
     }
 
@@ -69,10 +69,10 @@ fn get_insert_sql(conn: &mut PooledConn, table_name: &String) -> Result<String, 
         .as_str(),
     );
 
-    return Ok(sql);
+    Ok(sql)
 }
 
-fn create_dump_script(tables: &Vec<Table>) -> String {
+fn create_dump_script(tables: &[Table]) -> String {
     let mut table_sql = String::new();
 
     for table in tables {

@@ -40,7 +40,7 @@ pub fn zip(src_path: &str, zip_dest: &str) -> Result<(), io::Error> {
             f.read_to_end(&mut buffer)?;
             zip.write_all(&*buffer)?;
             buffer.clear();
-        } else if path_stripped.as_os_str().len() != 0 {
+        } else if !path_stripped.as_os_str().is_empty() {
             zip.add_directory(name, options)?;
         }
     }
