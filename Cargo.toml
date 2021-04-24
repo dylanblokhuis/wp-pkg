@@ -1,6 +1,6 @@
 [package]
 name = "wp-pkg"
-version = ""
+version = "0.1.0"
 license = "MIT"
 authors = ["Dylan Blokhuis <dylanblokhuis3@hotmail.com>"]
 edition = "2018"
