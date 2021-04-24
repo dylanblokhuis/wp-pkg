@@ -1272,6 +1272,7 @@ name = "wp-pkg"
 version = "0.1.0"
 dependencies = [
  "mysql",
+ "regex",
  "simple-stopwatch",
  "walkdir",
  "zip",

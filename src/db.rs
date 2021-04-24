@@ -6,9 +6,8 @@ struct Table {
     name: String,
     insert: String,
 }
-pub fn dump(dump_destination: &str) -> Result<(), mysql::Error> {
-    let url = "mysql://root:password@localhost:3306/wordpress";
-    let pool = Pool::new(url)?;
+pub fn dump(dump_destination: &str, db_url: &str) -> Result<(), mysql::Error> {
+    let pool = Pool::new(db_url)?;
     let mut conn = pool.get_conn()?;
 
     let mut tables: Vec<Table> = Vec::new();
@@ -16,8 +15,6 @@ pub fn dump(dump_destination: &str) -> Result<(), mysql::Error> {
     let show_tables_result: Vec<String> = conn.query("SHOW TABLES")?;
 
     for table_name in show_tables_result {
-        println!("Table: {}", table_name);
-
         let table_create_script: Option<(String, String)> =
             conn.query_first("SHOW CREATE TABLE ".to_owned() + table_name.as_str())?;
 
