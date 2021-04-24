@@ -1,7 +1,10 @@
+use simple_stopwatch::Stopwatch;
+
 mod db;
 mod wp;
 
 fn main() {
+    let sw = Stopwatch::start_new();
     let dir_where_cmd_is_run = "C:\\dev\\web\\wordpress".to_owned();
     let wp_content_dir = dir_where_cmd_is_run + "\\wp-content";
 
@@ -19,4 +22,7 @@ fn main() {
             std::process::exit(1);
         }
     }
+
+    let seconds = sw.s();
+    println!("Finished in {} seconds", seconds);
 }

@@ -896,6 +896,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "simple-stopwatch"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea0b3bc19fbfbbc5823eb4f9f52a94f98a97f7b265e96defe319dfdac9692b51"
+dependencies = [
+ "time 0.1.44",
+]
+
+[[package]]
 name = "socket2"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1263,6 +1272,7 @@ name = "wp-pkg"
 version = "0.1.0"
 dependencies = [
  "mysql",
+ "simple-stopwatch",
  "walkdir",
  "zip",
 ]
