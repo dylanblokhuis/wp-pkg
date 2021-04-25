@@ -104,7 +104,7 @@ jobs:
       - name: Install dependencies
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          sudo apt-get install libssl-dev
+          sudo apt-get install pkg-config libssl-dev
       - name: Build target
         uses: actions-rs/cargo@v1
         with:
