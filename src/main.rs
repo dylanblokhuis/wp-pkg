@@ -1,3 +1,4 @@
+use clap::{App, Arg};
 use simple_stopwatch::Stopwatch;
 use std::env;
 use std::path::Path;
@@ -7,11 +8,23 @@ mod db;
 mod wp;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-
-    println!("{}", args[1]);
     let sw = Stopwatch::start_new();
-    let path = PathBuf::from(&args[1]);
+
+    let matches = App::new(env!("CARGO_PKG_NAME"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .arg(Arg::from_usage("<path> 'Path to your WordPress project'"))
+        .get_matches();
+
+    let path_arg;
+    match matches.value_of("path") {
+        Some(val) => path_arg = val,
+        None => {
+            println!("No path argument supplied");
+            std::process::exit(1);
+        }
+    }
+
+    let path = PathBuf::from(path_arg);
 
     let mut absolute_path = std::env::current_dir().unwrap();
     absolute_path.push(path);
