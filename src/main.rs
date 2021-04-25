@@ -63,7 +63,7 @@ fn main() {
     }
 
     let db_url = format!(
-        "mysql://{user}:{password}@{host}:3306/{name}",
+        "mysql://{user}:{password}@{host}:3306/{name}?prefer_socket=false",
         user = wp_config.db_user,
         password = wp_config.db_password,
         host = wp_config.db_host,
