@@ -53,7 +53,7 @@ pub struct Config {
     pub db_user: String,
     pub db_password: String,
     pub db_host: String,
-    pub db_socket: Option<String>
+    pub db_socket: Option<String>,
 }
 
 pub fn read_config(wp_config_path: &str) -> Result<Config, io::Error> {
