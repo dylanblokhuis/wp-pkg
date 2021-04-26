@@ -1,6 +1,6 @@
 # wp-pkg
 
-Simple tool for packaging your WordPress project. Ignores non versioned files like node_modules and .git
+Simple tool for packaging your WordPress project and database. Ignores non versioned files like node_modules and .git
 
 ## Installation
 ```bash
