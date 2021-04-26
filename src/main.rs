@@ -62,13 +62,29 @@ fn main() {
         }
     }
 
-    let db_url = format!(
-        "mysql://{user}:{password}@{host}:3306/{name}?prefer_socket=false",
-        user = wp_config.db_user,
-        password = wp_config.db_password,
-        host = wp_config.db_host,
-        name = wp_config.db_name
-    );
+    let db_url;
+    match wp_config.db_socket {
+        Some(socket) => {
+            db_url = format!(
+                "mysql://{user}:{password}@{host}:3306/{name}?socket={socket}",
+                user = wp_config.db_user,
+                password = wp_config.db_password,
+                host = wp_config.db_host,
+                name = wp_config.db_name,
+                socket = socket
+            );
+        },
+        None => {
+            db_url = format!(
+                "mysql://{user}:{password}@{host}:3306/{name}",
+                user = wp_config.db_user,
+                password = wp_config.db_password,
+                host = wp_config.db_host,
+                name = wp_config.db_name
+            );
+        }
+    }
+    
 
     println!("Dumping database with credentials: {}", db_url.as_str());
     match db::dump("./dump.sql", db_url.as_str()) {

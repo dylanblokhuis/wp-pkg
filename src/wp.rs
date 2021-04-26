@@ -53,19 +53,20 @@ pub struct Config {
     pub db_user: String,
     pub db_password: String,
     pub db_host: String,
+    pub db_socket: Option<String>
 }
 
 pub fn read_config(wp_config_path: &str) -> Result<Config, io::Error> {
     let raw_config = &mut fs::read_to_string(wp_config_path)?;
-    remove_whitespace(raw_config);
 
-    let matches = Regex::new(r"define\('(?P<key>(.*?))','(?P<value>(.*?))'\);").unwrap();
+    let matches = Regex::new(r"define\(\s*'(?P<key>(.*?))',\s*'(?P<value>(.*?))'\s*\);").unwrap();
 
     let mut config: Config = Config {
         db_name: String::new(),
         db_user: String::new(),
         db_password: String::new(),
         db_host: String::new(),
+        db_socket: None,
     };
 
     for caps in matches.captures_iter(raw_config.as_str()) {
@@ -74,13 +75,10 @@ pub fn read_config(wp_config_path: &str) -> Result<Config, io::Error> {
             "DB_USER" => config.db_user = caps["value"].to_string(),
             "DB_PASSWORD" => config.db_password = caps["value"].to_string(),
             "DB_HOST" => config.db_host = caps["value"].to_string(),
+            "DB_SOCKET" => config.db_socket = Some(caps["value"].to_string()),
             _ => continue,
         }
     }
 
     Ok(config)
-}
-
-fn remove_whitespace(s: &mut String) {
-    s.retain(|c| !c.is_whitespace());
 }
