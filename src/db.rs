@@ -37,9 +37,9 @@ pub fn dump(
 
     if let Some(i) = current_domain {
         if let Some(j) = new_domain {
-            let matches = Regex::new(r#"s:(?P<length>(.*?)):\\"(?P<value>(.*?))\\""#).unwrap();
+            let matches = Regex::new(r#"s:(.*?):\\"(?P<value>(.*?))\\""#).unwrap();
 
-            let replace_result = matches.replace(dump_script.as_str(), |caps: &Captures| {
+            let replace_result = matches.replace_all(dump_script.as_str(), |caps: &Captures| {
                 let value = &caps["value"];
                 let new_value = value.replace(i, j);
 
