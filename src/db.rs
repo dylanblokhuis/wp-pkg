@@ -24,7 +24,7 @@ pub fn dump(
         let table_create_script: Option<(String, String)> =
             conn.query_first("SHOW CREATE TABLE ".to_owned() + table_name.as_str())?;
 
-        let insert_sql = get_insert_sql(&mut conn, &table_name, current_domain, new_domain)?;
+        let insert_sql = get_insert_sql(&mut conn, &table_name)?;
 
         tables.push(Table {
             name: table_name,
@@ -33,20 +33,33 @@ pub fn dump(
         });
     }
 
-    fs::write(
-        dump_destination,
-        create_dump_script(&tables, get_server_version(&mut conn)?.as_ref()),
-    )?;
+    let mut dump_script = create_dump_script(&tables, get_server_version(&mut conn)?.as_ref());
+
+    if let Some(i) = current_domain {
+        if let Some(j) = new_domain {
+            let matches = Regex::new(r#"s:(?P<length>(.*?)):\\"(?P<value>(.*?))\\""#).unwrap();
+
+            let replace_result = matches.replace(dump_script.as_str(), |caps: &Captures| {
+                let value = &caps["value"];
+                let new_value = value.replace(i, j);
+
+                format!(r#"s:{}:{}"#, new_value.len(), new_value)
+            });
+
+            // replace the serialized values
+            dump_script = replace_result.to_string();
+
+            // replace the regular records
+            dump_script = dump_script.replace(i, j);
+        }
+    }
+
+    fs::write(dump_destination, dump_script)?;
 
     Ok(())
 }
 
-fn get_insert_sql(
-    conn: &mut PooledConn,
-    table_name: &str,
-    current_domain: Option<&String>,
-    new_domain: Option<&String>,
-) -> Result<String, mysql::Error> {
+fn get_insert_sql(conn: &mut PooledConn, table_name: &str) -> Result<String, mysql::Error> {
     let mut sql = String::new();
     let query_rows: Vec<Row> = conn.query(format!("SELECT * FROM {}", table_name))?;
 
@@ -67,28 +80,7 @@ fn get_insert_sql(
         let mut values: Vec<String> = Vec::new();
         for column in row.columns_ref() {
             let column_value = &row[column.name_str().as_ref()];
-            let mut sql = column_value.as_sql(false);
-
-            // search and replace
-            if let Some(i) = current_domain {
-                if let Some(j) = new_domain {
-                    let matches =
-                        Regex::new(r#"s:(?P<length>(.*?)):\\"(?P<value>(.*?))\\""#).unwrap();
-
-                    let replace_result = matches.replace(sql.as_str(), |caps: &Captures| {
-                        let value = &caps["value"];
-                        let new_value = value.replace(i, j);
-
-                        format!(r#"s:{}:{}"#, new_value.len(), new_value)
-                    });
-
-                    // replace the serialized values
-                    sql = replace_result.to_string();
-
-                    // replace the regular records
-                    sql = sql.replace(i, j);
-                }
-            }
+            let sql = column_value.as_sql(false);
 
             values.push(sql);
         }
