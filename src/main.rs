@@ -29,8 +29,6 @@ fn main() {
     let mut absolute_path = std::env::current_dir().unwrap();
     absolute_path.push(path);
 
-    println!("{}", absolute_path.display());
-
     let wp_content_dir = absolute_path.join("wp-content").display().to_string();
     let wp_config_path = absolute_path.join("wp-config.php").display().to_string();
 
@@ -86,7 +84,12 @@ fn main() {
     }
 
     println!("Dumping database with credentials: {}", db_url.as_str());
-    match db::dump("./dump.sql", db_url.as_str()) {
+    match db::dump(
+        "./dump.sql",
+        db_url.as_str(),
+        wp_config.dev_site_domain.as_ref(),
+        wp_config.prod_site_domain.as_ref(),
+    ) {
         Ok(_) => {
             println!("Dumped database with credentials: {}\n", db_url.as_str());
         }

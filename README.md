@@ -3,6 +3,7 @@
 Simple tool for packaging your WordPress project and database. Ignores non versioned files like node_modules and .git
 
 ## Installation
+
 ```bash
 $ brew install dylanblokhuis/wp-pkg/wp-pkg
 ```
@@ -15,10 +16,17 @@ or [download](https://github.com/dylanblokhuis/wp-pkg/releases) the binaries and
 $ wp-pkg <path>
 ```
 
+## How to enable search and replace
+
+```php
+// wp-config.php
+define('DEV_SITE_DOMAIN', 'localhost:3000');
+define('PROD_SITE_DOMAIN', 'my-production-site.com');
+```
+
 ## How to use with Local by Flywheel
 
 Local uses a different mysql socket for each website, to make wp-pkg work you need to specify the path to your mysql socket.
-
 
 ```php
 // wp-config.php
@@ -31,5 +39,4 @@ define( 'DB_SOCKET', '/Users/<user>/Library/Application Support/Local/run/<site_
 
 - zips the wp-content folder with ignoring things like node_modules/.git etc ✔️
 - uses the wp-config file to export the database ✔️
-- search and replace the serialized stuff
-- config file? e.g. reading .wp-pkg file for settings like old url and new url
+- search and replace the serialized stuff ✔️

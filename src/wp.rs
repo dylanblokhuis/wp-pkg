@@ -13,7 +13,7 @@ pub fn zip(src_path: &str, zip_dest: &str) -> Result<(), io::Error> {
     let walked_src_dir = WalkDir::new(src_path);
     let it = walked_src_dir.into_iter().filter_map(|e| e.ok());
 
-    let zip_file = File::create(zip_dest).unwrap();
+    let zip_file = File::create(zip_dest)?;
 
     let mut zip = zip::ZipWriter::new(zip_file);
     let options = FileOptions::default()
@@ -54,6 +54,8 @@ pub struct Config {
     pub db_password: String,
     pub db_host: String,
     pub db_socket: Option<String>,
+    pub dev_site_domain: Option<String>,
+    pub prod_site_domain: Option<String>,
 }
 
 pub fn read_config(wp_config_path: &str) -> Result<Config, io::Error> {
@@ -67,6 +69,8 @@ pub fn read_config(wp_config_path: &str) -> Result<Config, io::Error> {
         db_password: String::new(),
         db_host: String::new(),
         db_socket: None,
+        dev_site_domain: None,
+        prod_site_domain: None,
     };
 
     for caps in matches.captures_iter(raw_config.as_str()) {
@@ -76,6 +80,8 @@ pub fn read_config(wp_config_path: &str) -> Result<Config, io::Error> {
             "DB_PASSWORD" => config.db_password = caps["value"].to_string(),
             "DB_HOST" => config.db_host = caps["value"].to_string(),
             "DB_SOCKET" => config.db_socket = Some(caps["value"].to_string()),
+            "DEV_SITE_DOMAIN" => config.dev_site_domain = Some(caps["value"].to_string()),
+            "PROD_SITE_DOMAIN" => config.prod_site_domain = Some(caps["value"].to_string()),
             _ => continue,
         }
     }

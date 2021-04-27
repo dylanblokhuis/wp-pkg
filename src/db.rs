@@ -1,4 +1,5 @@
 use mysql::{prelude::Queryable, Pool, PooledConn, Row};
+use regex::{Captures, Regex};
 use std::fs;
 
 struct Table {
@@ -6,7 +7,12 @@ struct Table {
     name: String,
     insert: String,
 }
-pub fn dump(dump_destination: &str, db_url: &str) -> Result<(), mysql::Error> {
+pub fn dump(
+    dump_destination: &str,
+    db_url: &str,
+    current_domain: Option<&String>,
+    new_domain: Option<&String>,
+) -> Result<(), mysql::Error> {
     let pool = Pool::new(db_url)?;
     let mut conn = pool.get_conn()?;
 
@@ -18,7 +24,7 @@ pub fn dump(dump_destination: &str, db_url: &str) -> Result<(), mysql::Error> {
         let table_create_script: Option<(String, String)> =
             conn.query_first("SHOW CREATE TABLE ".to_owned() + table_name.as_str())?;
 
-        let insert_sql = get_insert_sql(&mut conn, &table_name)?;
+        let insert_sql = get_insert_sql(&mut conn, &table_name, current_domain, new_domain)?;
 
         tables.push(Table {
             name: table_name,
@@ -27,12 +33,20 @@ pub fn dump(dump_destination: &str, db_url: &str) -> Result<(), mysql::Error> {
         });
     }
 
-    fs::write(dump_destination, create_dump_script(&tables))?;
+    fs::write(
+        dump_destination,
+        create_dump_script(&tables, get_server_version(&mut conn)?.as_ref()),
+    )?;
 
     Ok(())
 }
 
-fn get_insert_sql(conn: &mut PooledConn, table_name: &str) -> Result<String, mysql::Error> {
+fn get_insert_sql(
+    conn: &mut PooledConn,
+    table_name: &str,
+    current_domain: Option<&String>,
+    new_domain: Option<&String>,
+) -> Result<String, mysql::Error> {
     let mut sql = String::new();
     let query_rows: Vec<Row> = conn.query(format!("SELECT * FROM {}", table_name))?;
 
@@ -53,7 +67,30 @@ fn get_insert_sql(conn: &mut PooledConn, table_name: &str) -> Result<String, mys
         let mut values: Vec<String> = Vec::new();
         for column in row.columns_ref() {
             let column_value = &row[column.name_str().as_ref()];
-            values.push(column_value.as_sql(false));
+            let mut sql = column_value.as_sql(false);
+
+            // search and replace
+            if let Some(i) = current_domain {
+                if let Some(j) = new_domain {
+                    let matches =
+                        Regex::new(r#"s:(?P<length>(.*?)):\\"(?P<value>(.*?))\\""#).unwrap();
+
+                    let replace_result = matches.replace(sql.as_str(), |caps: &Captures| {
+                        let value = &caps["value"];
+                        let new_value = value.replace(i, j);
+
+                        format!(r#"s:{}:{}"#, new_value.len(), new_value)
+                    });
+
+                    // replace the serialized values
+                    sql = replace_result.to_string();
+
+                    // replace the regular records
+                    sql = sql.replace(i, j);
+                }
+            }
+
+            values.push(sql);
         }
 
         rows.push(format!("({})", values.join(", ")));
@@ -72,7 +109,13 @@ fn get_insert_sql(conn: &mut PooledConn, table_name: &str) -> Result<String, mys
     Ok(sql)
 }
 
-fn create_dump_script(tables: &[Table]) -> String {
+fn get_server_version(conn: &mut PooledConn) -> Result<String, mysql::Error> {
+    let version_query: Option<String> = conn.query_first("SELECT version()")?;
+
+    Ok(version_query.unwrap_or("Unknown".to_string()))
+}
+
+fn create_dump_script(tables: &[Table], server_version: &str) -> String {
     let mut table_sql = String::new();
 
     for table in tables {
@@ -105,10 +148,10 @@ UNLOCK TABLES;
 
     format!(
         "
--- SQL Dump {dump_version}
+-- SQL Dump by wp-pkg on version: {dump_version}
 --
 -- ------------------------------------------------------
--- Server version	{server_version}
+-- Database server version {server_version}
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
@@ -121,8 +164,8 @@ UNLOCK TABLES;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 {table_sql}",
-        dump_version = "0.1",
-        server_version = "5.6",
+        dump_version = env!("CARGO_PKG_VERSION"),
+        server_version = server_version,
         table_sql = table_sql
     )
 }
