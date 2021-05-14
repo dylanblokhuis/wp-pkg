@@ -43,7 +43,7 @@ pub fn dump(
                 let value = &caps["value"];
                 let new_value = value.replace(i, j);
 
-                format!(r#"s:{}:{}"#, new_value.len(), new_value)
+                format!(r#"s:{}:"{}""#, new_value.len(), new_value)
             });
 
             // replace the serialized values
